@@ -5,6 +5,7 @@ import org.ormhatch.data.DataTypeMapper;
 import org.ormhatch.data.TableData;
 import org.ormhatch.db.DBConnector;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -43,9 +44,15 @@ public class Main {
                     TableData tableData = new TableData(columnName, datatype,Boolean.getBoolean(isNullable),Boolean.getBoolean(is_autoIncrment));
                     map.put(columnName,tableData);
                 }
-                dtoGenerator.buildClass(tableName,map,"");
+                //dtoGenerator.buildClass(tableName,map,"com.test.data",  );
+                StringBuffer stringBuffer =  dtoGenerator.buildClass(tableName,map,"com.test.data");
+                if(stringBuffer !=null){
+                    try {
+                        dtoGenerator.writeClass(tableName,stringBuffer.toString(),"D:\\MSC\\ORM_TEST","com.test.data");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
             }
-
-
         }
 }
