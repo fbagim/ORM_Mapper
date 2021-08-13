@@ -5,12 +5,15 @@ public class TableData {
     private String datatype;
     private Boolean isNullable;
     private Boolean isAutoIncrment;
+    private Boolean isPk;
 
-    public TableData(String columnName, String datatype, Boolean isNullable, Boolean isAutoIncrment) {
+    public TableData(String columnName, String datatype, Boolean isNullable, Boolean isAutoIncrment,Boolean isPk,Boolean isFk) {
         this.columnName = columnName;
         this.datatype = datatype;
         this.isNullable = isNullable;
         this.isAutoIncrment = isAutoIncrment;
+        this.isAutoIncrment = isAutoIncrment;
+        this.isPk = isPk;
     }
     public String getColumnName() {
         return columnName;
@@ -42,5 +45,13 @@ public class TableData {
 
     public void setAutoIncrment(Boolean autoIncrment) {
         isAutoIncrment = autoIncrment;
+    }
+
+    public Boolean getPk() {
+        return isPk;
+    }
+
+    public void setPk(Boolean pk) {
+        isPk = pk;
     }
 }

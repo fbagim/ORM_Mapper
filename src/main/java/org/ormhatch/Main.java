@@ -9,7 +9,9 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Main {
@@ -19,6 +21,7 @@ public class Main {
             Connection connection =  DBConnector.getConnection();
             ResultSet resultSet = connection.getMetaData().getTables(null, null, null, new String[]{"TABLE"});
             ResultSet resultSet2 = connection.getMetaData().getTypeInfo();
+
             System.out.println("DATA TYPE");
             System.out.println("----------------------------------");
             DTOGenerator dtoGenerator = new DTOGenerator();
@@ -33,6 +36,20 @@ public class Main {
             while(resultSet.next())
             {
                 String tableName = resultSet.getString("TABLE_NAME");
+                ResultSet resultSetPK = connection.getMetaData().getPrimaryKeys(null,null,tableName);
+                ResultSet resultSetFK = connection.getMetaData().getExportedKeys(null,null,tableName);
+                List pkList = new ArrayList();
+                List fkList = new ArrayList();
+
+                while(resultSetPK.next())
+                {
+                    pkList.add(resultSetPK.getString(".COLUMN_NAME"));
+                }
+                while(resultSetFK.next())
+                {
+                    fkList.add(resultSetPK.getString(".COLUMN_NAME"));
+                }
+
                 ResultSet columns = connection.getMetaData().getColumns(null,null, resultSet.getString("TABLE_NAME"), null);
                 while(columns.next())
                 {
@@ -40,15 +57,23 @@ public class Main {
                     String datatype = columns.getString("TYPE_NAME");
                     String isNullable = columns.getString("IS_NULLABLE");
                     String is_autoIncrment = columns.getString("IS_AUTOINCREMENT");
+
                     //Printing results
-                    TableData tableData = new TableData(columnName, datatype,Boolean.getBoolean(isNullable),Boolean.getBoolean(is_autoIncrment));
+                    TableData tableData =null;
+                    if(pkList.contains(columnName)){
+                          tableData = new TableData(columnName, datatype,Boolean.getBoolean(isNullable),Boolean.getBoolean(is_autoIncrment),true,false);
+                    } else if(fkList.contains(columnName)){
+                          tableData = new TableData(columnName, datatype,Boolean.getBoolean(isNullable),Boolean.getBoolean(is_autoIncrment),false,true);
+                    } else {
+                        tableData = new TableData(columnName, datatype,Boolean.getBoolean(isNullable),Boolean.getBoolean(is_autoIncrment),false,false);
+                    }
                     map.put(columnName,tableData);
                 }
-                //dtoGenerator.buildClass(tableName,map,"com.test.data",  );
+
                 StringBuffer stringBuffer =  dtoGenerator.buildClass(tableName,map,"com.test.data");
                 if(stringBuffer !=null){
                     try {
-                        dtoGenerator.writeClass(tableName,stringBuffer.toString(),"D:\\MSC\\ORM_TEST","com.test.data");
+                        dtoGenerator.writeClass(tableName,stringBuffer.toString(),"D:\\MSC\\ORM_TEST_1","com.test.data");
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

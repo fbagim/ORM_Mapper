@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 public class DTOGenerator extends ClassGenerator{
 
@@ -15,17 +16,42 @@ public class DTOGenerator extends ClassGenerator{
             StringBuffer stringBuffer = new StringBuffer();
             stringBuffer.append(createPackage(pkgName,attributes));
             stringBuffer.append("\n");
+            stringBuffer.append("\n");
+            stringBuffer.append("@Entity");
+            stringBuffer.append("\n");
             stringBuffer.append("public class "+className +" implements Serializable {");
             stringBuffer.append("\n");
+            String pkId = null;
             for(Object key : attributes.keySet()){
                 String attribute = (String) key;
                 TableData tableData =  attributes.get(attribute);
-                stringBuffer.append("\t");
+                if(tableData.getPk()){
+                    pkId = key.toString();
+                    stringBuffer.append("\t");
+                    stringBuffer.append("@Id");
+                    stringBuffer.append("\n");
+                    stringBuffer.append("\t");
+                    stringBuffer.append("@GeneratedValue(strategy = GenerationType.IDENTITY)");
+                    stringBuffer.append("\n");
+                    stringBuffer.append("\t");
+                    String dataType = DataTypeMapper.dataTypeMap.get(tableData.getDatatype());
+                    stringBuffer.append("private "+ dataType+" "+lowerCase(attribute)+";");
+                    stringBuffer.append("\n");
+                }
+            }
+            attributes.remove(pkId);
+
+            for(Object key : attributes.keySet()){
+                String attribute = (String) key;
+                TableData tableData =  attributes.get(attribute);
+
                 String dataType = DataTypeMapper.dataTypeMap.get(tableData.getDatatype());
+                stringBuffer.append("\t");
                 stringBuffer.append("private "+dataType+" "+lowerCase(attribute)+";");
                 stringBuffer.append("\n");
             }
             stringBuffer.append("\n");
+
             for(Object key : attributes.keySet()){
                 String attribute = (String) key;
                 TableData tableData =  attributes.get(attribute);
@@ -113,6 +139,15 @@ public class DTOGenerator extends ClassGenerator{
         stringBuffer.append("import java.time.LocalDateTime;");
         stringBuffer.append("\n");
         stringBuffer.append("import java.util.*;");
+        stringBuffer.append("\n");
+        stringBuffer.append("import javax.persistence.Entity;");
+        stringBuffer.append("\n");
+        stringBuffer.append("import javax.persistence.GenerationType;");
+        stringBuffer.append("\n");
+        stringBuffer.append("import javax.persistence.GeneratedValue;");
+        stringBuffer.append("\n");
+        stringBuffer.append("import javax.persistence.Id;");
+
         return  stringBuffer;
     }
 }
