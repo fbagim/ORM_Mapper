@@ -6,7 +6,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 
 public class DTOGenerator extends ClassGenerator{
 
@@ -18,6 +17,8 @@ public class DTOGenerator extends ClassGenerator{
             stringBuffer.append("\n");
             stringBuffer.append("\n");
             stringBuffer.append("@Entity");
+            stringBuffer.append("\n");
+            stringBuffer.append("@Table(name = "+className.toLowerCase(Locale.ROOT)+")");
             stringBuffer.append("\n");
             stringBuffer.append("public class "+className +" implements Serializable {");
             stringBuffer.append("\n");
@@ -147,6 +148,10 @@ public class DTOGenerator extends ClassGenerator{
         stringBuffer.append("import javax.persistence.GeneratedValue;");
         stringBuffer.append("\n");
         stringBuffer.append("import javax.persistence.Id;");
+        stringBuffer.append("\n");
+        stringBuffer.append("import javax.persistence.OneToOne;");
+        stringBuffer.append("\n");
+        stringBuffer.append("import javax.persistence.Table");
 
         return  stringBuffer;
     }

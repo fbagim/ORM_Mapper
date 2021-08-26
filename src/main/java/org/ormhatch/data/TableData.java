@@ -6,6 +6,7 @@ public class TableData {
     private Boolean isNullable;
     private Boolean isAutoIncrment;
     private Boolean isPk;
+    private Boolean isFk;
 
     public TableData(String columnName, String datatype, Boolean isNullable, Boolean isAutoIncrment,Boolean isPk,Boolean isFk) {
         this.columnName = columnName;
@@ -15,6 +16,15 @@ public class TableData {
         this.isAutoIncrment = isAutoIncrment;
         this.isPk = isPk;
     }
+
+    public Boolean getFk() {
+        return isFk;
+    }
+
+    public void setFk(Boolean fk) {
+        isFk = fk;
+    }
+
     public String getColumnName() {
         return columnName;
     }
