@@ -2,6 +2,7 @@ package org.ormhatch;
 
 import org.ormhatch.data.DTOGenerator;
 import org.ormhatch.data.DataTypeMapper;
+import org.ormhatch.data.Pkfk;
 import org.ormhatch.data.TableData;
 import org.ormhatch.db.DBConnector;
 
@@ -9,75 +10,88 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Main {
 
-        public static void main(String ss[]) throws SQLException {
-            HashMap<String, TableData> map = new HashMap<>();
-            Connection connection =  DBConnector.getConnection();
-            ResultSet resultSet = connection.getMetaData().getTables(null, null, null, new String[]{"TABLE"});
-            ResultSet resultSet2 = connection.getMetaData().getTypeInfo();
+    public static void main(String ss[]) throws Exception {
+        ConcurrentHashMap<String, TableData> map = new ConcurrentHashMap<>();
+        Connection connection = DBConnector.getConnection();
+        ResultSet resultSet = connection.getMetaData().getTables(null, null, null, new String[]{"TABLE"});
+        ResultSet resultSet2 = connection.getMetaData().getTypeInfo();
+        List<Pkfk> fkList = new ArrayList();
 
-            System.out.println("DATA TYPE");
-            System.out.println("----------------------------------");
-            DTOGenerator dtoGenerator = new DTOGenerator();
+        System.out.println("DATA TYPE");
+        System.out.println("----------------------------------");
+        DTOGenerator dtoGenerator = new DTOGenerator();
 
-            while(resultSet2.next())
-            {
-                DataTypeMapper.addData(resultSet2.getString("TYPE_NAME"));
+        while (resultSet2.next()) {
+            DataTypeMapper.addData(resultSet2.getString("TYPE_NAME"));
+        }
+
+        System.out.println("Printing TABLE_TYPE \"TABLE\" ");
+        System.out.println("----------------------------------");
+        while (resultSet.next()) {
+            String tableName = resultSet.getString("TABLE_NAME");
+            ResultSet resultSetPK = connection.getMetaData().getPrimaryKeys(null, null, tableName);
+            ResultSet resultSetFK = connection.getMetaData().getExportedKeys(null, null, tableName);
+            List pkList = new ArrayList();
+
+            while (resultSetPK.next()) {
+                pkList.add(resultSetPK.getString(".COLUMN_NAME"));
+            }
+            while (resultSetFK.next()) {
+                Pkfk pkfk = new Pkfk(tableName,resultSetFK.getString("PKTABLE_NAME"),resultSetFK.getString(".FKTABLE_NAME") ,false,false,false,resultSetFK.getString("PKCOLUMN_NAME"));
+                fkList.add(pkfk);
+            }
+            if (fkList.size()>0) {
+                for(Pkfk pkfk : fkList){
+                    TableData tableData =null;
+                    if(!pkfk.getDone()){
+                        if(!pkfk.getDoneL() && !pkfk.getDoneR()){
+                            tableData = new TableData( pkfk.getPkCol(),pkfk.getFkTable(), false,false, false, true, pkfk.getFkTable(), true,false,false);
+                            pkfk.setDoneL(true);
+                        } else if(!pkfk.getDoneL()){
+                            tableData = new TableData( pkfk.getPkCol(),pkfk.getFkTable(), false,false, false, true, pkfk.getFkTable(), true,false,false);
+                            pkfk.setDoneL(true);
+                        }else if(!pkfk.getDoneR()){
+                            tableData = new TableData( pkfk.getPkCol(), pkfk.getFkTable(), false,false, false, true, pkfk.getFkTable(), false,true,false);
+                            pkfk.setDoneR(true);
+                        } else if(pkfk.getDoneL() && pkfk.getDoneR()){
+                            tableData = new TableData( pkfk.getPkCol(),pkfk.getFkTable(), false,false, false, true, pkfk.getFkTable(), true,true,true);
+                            pkfk.setDone(true);
+                        }
+                    }
+                    map.put(pkfk.getFkTable(), tableData);
+                }
+            }
+            ResultSet columns = connection.getMetaData().getColumns(null, null, resultSet.getString("TABLE_NAME"), null);
+            while (columns.next()) {
+                String columnName = columns.getString("COLUMN_NAME");
+                String datatype = columns.getString("TYPE_NAME");
+                String isNullable = columns.getString("IS_NULLABLE");
+                String is_autoIncrment = columns.getString("IS_AUTOINCREMENT");
+
+                //Printing results
+                TableData tableData = null;
+                if (pkList.contains(columnName)) {
+                    tableData = new TableData(columnName, datatype, Boolean.getBoolean(isNullable), Boolean.getBoolean(is_autoIncrment), true, false, null,false,false,false);
+                    map.put(columnName, tableData);
+                } else {
+                    tableData = new TableData(columnName, datatype, Boolean.getBoolean(isNullable), Boolean.getBoolean(is_autoIncrment), false, false, null, false,false,false);
+                    map.put(columnName, tableData);
+                }
             }
 
-            System.out.println("Printing TABLE_TYPE \"TABLE\" ");
-            System.out.println("----------------------------------");
-            while(resultSet.next())
-            {
-                String tableName = resultSet.getString("TABLE_NAME");
-                ResultSet resultSetPK = connection.getMetaData().getPrimaryKeys(null,null,tableName);
-                ResultSet resultSetFK = connection.getMetaData().getExportedKeys(null,null,tableName);
-                List pkList = new ArrayList();
-                List fkList = new ArrayList();
-
-                while(resultSetPK.next())
-                {
-                    pkList.add(resultSetPK.getString(".COLUMN_NAME"));
-                }
-                while(resultSetFK.next())
-                {
-                    fkList.add(resultSetPK.getString(".COLUMN_NAME"));
-                }
-
-                ResultSet columns = connection.getMetaData().getColumns(null,null, resultSet.getString("TABLE_NAME"), null);
-                while(columns.next())
-                {
-                    String columnName = columns.getString("COLUMN_NAME");
-                    String datatype = columns.getString("TYPE_NAME");
-                    String isNullable = columns.getString("IS_NULLABLE");
-                    String is_autoIncrment = columns.getString("IS_AUTOINCREMENT");
-
-                    //Printing results
-                    TableData tableData =null;
-                    if(pkList.contains(columnName)){
-                          tableData = new TableData(columnName, datatype,Boolean.getBoolean(isNullable),Boolean.getBoolean(is_autoIncrment),true,false);
-                    } else if(fkList.contains(columnName)){
-                          tableData = new TableData(columnName, datatype,Boolean.getBoolean(isNullable),Boolean.getBoolean(is_autoIncrment),false,true);
-                    } else {
-                        tableData = new TableData(columnName, datatype,Boolean.getBoolean(isNullable),Boolean.getBoolean(is_autoIncrment),false,false);
-                    }
-                    map.put(columnName,tableData);
-                }
-
-                StringBuffer stringBuffer =  dtoGenerator.buildClass(tableName,map,"com.test.data");
-                if(stringBuffer !=null){
-                    try {
-                        dtoGenerator.writeClass(tableName,stringBuffer.toString(),"D:\\MSC\\ORM_TEST_1","com.test.data");
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+            StringBuffer stringBuffer = dtoGenerator.buildClass(tableName, map, "com.test.data");
+            if (stringBuffer != null) {
+                try {
+                    dtoGenerator.writeClass(tableName, stringBuffer.toString(), "D:\\MSC\\ORM_TEST_2", "com.test.data");
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         }
+    }
 }

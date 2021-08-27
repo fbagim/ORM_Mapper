@@ -7,14 +7,32 @@ public class TableData {
     private Boolean isAutoIncrment;
     private Boolean isPk;
     private Boolean isFk;
+    private Boolean isLeft;
+    private String joinedTable;
+    private Boolean isRight;
+    private Boolean isDone;
 
-    public TableData(String columnName, String datatype, Boolean isNullable, Boolean isAutoIncrment,Boolean isPk,Boolean isFk) {
+
+    public TableData(String columnName, String datatype, Boolean isNullable, Boolean isAutoIncrment,Boolean isPk,Boolean isFk, String joinedTable, Boolean isLeft, Boolean isRight, Boolean isDone) {
         this.columnName = columnName;
         this.datatype = datatype;
         this.isNullable = isNullable;
         this.isAutoIncrment = isAutoIncrment;
         this.isAutoIncrment = isAutoIncrment;
         this.isPk = isPk;
+        this.isFk = isFk;
+        this.joinedTable = joinedTable;
+        this.isLeft = isLeft;
+        this.isRight = isRight;
+        this.isDone = isDone;
+    }
+
+    public String getJoinedTable() {
+        return joinedTable;
+    }
+
+    public void setJoinedTable(String joinedTable) {
+        this.joinedTable = joinedTable;
     }
 
     public Boolean getFk() {
@@ -63,5 +81,29 @@ public class TableData {
 
     public void setPk(Boolean pk) {
         isPk = pk;
+    }
+
+    public Boolean getLeft() {
+        return isLeft;
+    }
+
+    public void setLeft(Boolean left) {
+        isLeft = left;
+    }
+
+    public Boolean getRight() {
+        return isRight;
+    }
+
+    public void setRight(Boolean right) {
+        isRight = right;
+    }
+
+    public Boolean getDone() {
+        return isDone;
+    }
+
+    public void setDone(Boolean done) {
+        isDone = done;
     }
 }

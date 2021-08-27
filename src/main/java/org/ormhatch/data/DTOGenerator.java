@@ -6,13 +6,16 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class DTOGenerator extends ClassGenerator{
 
     @Override
-    public StringBuffer buildClass(String className, Map<String,TableData> attributes, String pkgName) {
+    public StringBuffer buildClass(String className, ConcurrentHashMap<String,TableData> attributes, String pkgName) throws Exception {
         if(!className.isEmpty() && attributes.size()>0 && !pkgName.isEmpty() ){
             StringBuffer stringBuffer = new StringBuffer();
+            stringBuffer.append(createPackageDesc());
+            stringBuffer.append("\n");
             stringBuffer.append(createPackage(pkgName,attributes));
             stringBuffer.append("\n");
             stringBuffer.append("\n");
@@ -20,9 +23,10 @@ public class DTOGenerator extends ClassGenerator{
             stringBuffer.append("\n");
             stringBuffer.append("@Table(name = "+className.toLowerCase(Locale.ROOT)+")");
             stringBuffer.append("\n");
-            stringBuffer.append("public class "+className +" implements Serializable {");
+            stringBuffer.append("public class "+toTitleCase(className) +" implements Serializable {");
             stringBuffer.append("\n");
             String pkId = null;
+            String fkId = null;
             for(Object key : attributes.keySet()){
                 String attribute = (String) key;
                 TableData tableData =  attributes.get(attribute);
@@ -40,7 +44,37 @@ public class DTOGenerator extends ClassGenerator{
                     stringBuffer.append("\n");
                 }
             }
+            // remove PK_ID
             attributes.remove(pkId);
+            for(Object key : attributes.keySet()) {
+                String attribute = (String) key;
+                TableData tableData = attributes.get(attribute);
+                if(tableData.getFk()){
+                    if(!tableData.getDone() && tableData.getLeft()){
+                        stringBuffer.append("\n");
+                        stringBuffer.append("\t");
+                        stringBuffer.append("@OneToOne(mappedBy = "+ toTitleCase(className)+", fetch = FetchType.LAZY, cascade = CascadeType.ALL)");
+                        stringBuffer.append("\n");
+                        stringBuffer.append("\t");
+                        stringBuffer.append("private "+ toTitleCase(tableData.getJoinedTable())+" "+lowerCase(tableData.getJoinedTable())+";");
+                        stringBuffer.append("\n");
+                        attributes.remove(attribute);
+                    } else if(!tableData.getDone() && tableData.getRight()){
+                        stringBuffer.append("\n");
+                        stringBuffer.append("\t");
+                        stringBuffer.append("OneToOne(fetch = FetchType.LAZY, optional = false)");
+                        stringBuffer.append("\n");
+                        stringBuffer.append("\t");
+                       // stringBuffer.append("@JoinColumn(name = "+tableData.getColumnName()+", nullable = false)");
+                        stringBuffer.append("@JoinColumn(name = '<Need to map joined column here>', nullable = false)");
+                        stringBuffer.append("\n");
+                        stringBuffer.append("\t");
+                        stringBuffer.append("private "+ tableData.getJoinedTable()+" "+lowerCase(tableData.getJoinedTable())+";");
+                        stringBuffer.append("\n");
+                        attributes.remove(attribute);
+                    }
+                }
+            }
 
             for(Object key : attributes.keySet()){
                 String attribute = (String) key;
@@ -109,7 +143,7 @@ public class DTOGenerator extends ClassGenerator{
                 if(!location.exists()){
                     location.mkdirs();
                 }
-                File file = new File(fileLocation + "/" + filePath + "/" + className + ".java");
+                File file = new File(fileLocation + "/" + filePath + "/" +toTitleCase(className)  + ".java");
               //  file.deleteOnExit();
                 file.createNewFile();
 
@@ -128,7 +162,7 @@ public class DTOGenerator extends ClassGenerator{
     }
 
     @Override
-    public StringBuffer createPackage(String packageName, Map<String, TableData> attributes) {
+    public StringBuffer createPackage(String packageName, ConcurrentHashMap<String, TableData> attributes) {
         StringBuffer stringBuffer = new StringBuffer();
         stringBuffer.append("package "+packageName);
         stringBuffer.append("\n");
@@ -154,5 +188,20 @@ public class DTOGenerator extends ClassGenerator{
         stringBuffer.append("import javax.persistence.Table");
 
         return  stringBuffer;
+    }
+
+    @Override
+    public StringBuffer createPackageDesc() throws Exception {
+        StringBuffer stringBuffer = new StringBuffer();
+        stringBuffer.append("/*This Code is generated by ORM Plugin and developed by Asanka Gimhana..*/");
+        return stringBuffer;
+    }
+
+    public static String toTitleCase(String input) {
+        input = input.toLowerCase();
+        char c =  input.charAt(0);
+        String s = new String("" + c);
+        String f = s.toUpperCase();
+        return f + input.substring(1);
     }
 }
