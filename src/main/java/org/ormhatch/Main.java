@@ -1,9 +1,6 @@
 package org.ormhatch;
 
-import org.ormhatch.data.DTOGenerator;
-import org.ormhatch.data.DataTypeMapper;
-import org.ormhatch.data.Pkfk;
-import org.ormhatch.data.TableData;
+import org.ormhatch.data.*;
 import org.ormhatch.db.DBConnector;
 
 import java.io.IOException;
@@ -25,6 +22,8 @@ public class Main {
         System.out.println("DATA TYPE");
         System.out.println("----------------------------------");
         DTOGenerator dtoGenerator = new DTOGenerator();
+        DAOGenerator daoGenerator = new DAOGenerator();
+        ControllerGenerator ctlGenerator = new ControllerGenerator();
 
         while (resultSet2.next()) {
             DataTypeMapper.addData(resultSet2.getString("TYPE_NAME"));
@@ -84,10 +83,26 @@ public class Main {
                 }
             }
 
-            StringBuffer stringBuffer = dtoGenerator.buildClass(tableName, map, "com.test.data");
-            if (stringBuffer != null) {
+            StringBuffer stringBufferDto = dtoGenerator.buildClass(tableName, map, "com.test.data");
+            if (stringBufferDto != null) {
                 try {
-                    dtoGenerator.writeClass(tableName, stringBuffer.toString(), "D:\\MSC\\ORM_TEST_2", "com.test.data");
+                    dtoGenerator.writeClass(tableName, stringBufferDto.toString(), "D:\\MSC\\ORM_TEST_2", "com.test.model");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            StringBuffer stringBufferDao = daoGenerator.buildClass(tableName, null, "com.test.data");
+            if (stringBufferDto != null) {
+                try {
+                    daoGenerator.writeClass(tableName, stringBufferDao.toString(), "D:\\MSC\\ORM_TEST_2", "com.test.repository");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            StringBuffer stringBufferCotroller = ctlGenerator.buildClass(tableName, null, "com.test.data");
+            if (stringBufferDto != null) {
+                try {
+                    ctlGenerator.writeClass(tableName, stringBufferCotroller.toString(), "D:\\MSC\\ORM_TEST_2", "com.test.controller");
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
