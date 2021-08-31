@@ -14,7 +14,7 @@ public class Main {
 
     public static void main(String ss[]) throws Exception {
         ConcurrentHashMap<String, TableData> map = new ConcurrentHashMap<>();
-        Connection connection = DBConnector.getConnection();
+        Connection connection = DBConnector.getConnection("","","","");
         ResultSet resultSet = connection.getMetaData().getTables(null, null, null, new String[]{"TABLE"});
         ResultSet resultSet2 = connection.getMetaData().getTypeInfo();
         List<Pkfk> fkList = new ArrayList();

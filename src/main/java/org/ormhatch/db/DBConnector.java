@@ -2,16 +2,13 @@ package org.ormhatch.db;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 
 public class DBConnector {
-    public static Connection getConnection() {
-        try{
-            Class.forName("com.mysql.jdbc.Driver");
-            Connection con= DriverManager.getConnection("jdbc:mysql://localhost:3306/db_emp","root","");
-            return con;
-        }catch(Exception e){
-            System.out.println(e);
-        }
-        return null;
+    public static Connection getConnection(String url,String userName, String password,String db) throws ClassNotFoundException, SQLException {
+        Class.forName("com.mysql.jdbc.Driver");
+        Connection con= DriverManager.getConnection("jdbc:mysql://"+url+":3306/"+db,"root","");
+        return con;
+
     }
 }
