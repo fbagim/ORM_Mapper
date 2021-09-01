@@ -4,6 +4,7 @@ import org.ormhatch.data.*;
 import org.ormhatch.db.DBConnector;
 
 import javax.swing.*;
+import java.io.File;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -22,6 +23,7 @@ public class MainFrame extends javax.swing.JFrame {
    private  Connection connection = null;
    private String pkgName;
    private String projectName;
+   private String locationPath;
    private DefaultListModel listModelLeft;
    private DefaultListModel listModelRight;
    List<Pkfk> fkList = new ArrayList();
@@ -433,7 +435,9 @@ public class MainFrame extends javax.swing.JFrame {
 
         jPanel9.setBorder(javax.swing.BorderFactory.createLineBorder(null));
 
+        jTextArea1.setBackground(new java.awt.Color(0, 0, 0));
         jTextArea1.setColumns(20);
+        jTextArea1.setForeground(new java.awt.Color(0, 204, 0));
         jTextArea1.setRows(5);
         jScrollPane3.setViewportView(jTextArea1);
 
@@ -462,7 +466,7 @@ public class MainFrame extends javax.swing.JFrame {
         jButton1.setText("Browse");
         jButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-
+                cmdBrowsePerformed(evt);
             }
         });
 
@@ -671,7 +675,7 @@ public class MainFrame extends javax.swing.JFrame {
         txtPkgName.setText("com.test");
         txtServer.setText("localhost");
         txtDBName.setText("db_emp");
-
+        jTextArea1.setText("=============================================Event Log===================================================");
     }
 
     private void txtServerActionPerformed(java.awt.event.ActionEvent evt) {
@@ -687,6 +691,15 @@ public class MainFrame extends javax.swing.JFrame {
 
     }
 
+    private void cmdBrowsePerformed(java.awt.event.ActionEvent evt) {
+        JFileChooser fc = new JFileChooser();
+        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        int i = fc.showOpenDialog(this);
+        if (i == JFileChooser.APPROVE_OPTION) {
+            String path = fc.getSelectedFile().getAbsolutePath();
+            txtFilePath.setText(path);
+        }
+    }
     private void cmdExit3ActionPerformed(java.awt.event.ActionEvent evt) {
         // TODO add your handling code here:
     }
@@ -788,84 +801,111 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     private void cmdExit2ActionPerformed(java.awt.event.ActionEvent evt) {
-        // TODO add your handling code here:
+       System.exit(0);
     }
 
     private void cmdGenActionPerformed(java.awt.event.ActionEvent evt) {
         try {
-            DTOGenerator dtoGenerator = new DTOGenerator();
-            DAOGenerator daoGenerator = new DAOGenerator();
-            ControllerGenerator ctlGenerator = new ControllerGenerator();
+            StringBuffer log = new StringBuffer();
+            log.append("=============================================Event Log===================================================");
 
-            ResultSet resultSet = connection.getMetaData().getTables(null, null, null, new String[]{"TABLE"});
-            while (resultSet.next()) {
-                String tableName = resultSet.getString("TABLE_NAME");
-                if(listModelRight.contains(tableName)){
-                    ResultSet resultSetPK = connection.getMetaData().getPrimaryKeys(null, null, tableName);
-                    ResultSet resultSetFK = connection.getMetaData().getExportedKeys(null, null, tableName);
-                    List pkList = new ArrayList();
+            if(!txtFilePath.getText().isEmpty()){
+                log.append("\n");
+                log.append("-------------- > Code Generation Process Started");
+                log.append("\n");
+                jTextArea1.setText(log.toString());
+                DTOGenerator dtoGenerator = new DTOGenerator();
+                DAOGenerator daoGenerator = new DAOGenerator();
+                ControllerGenerator ctlGenerator = new ControllerGenerator();
 
-                    while (resultSetPK.next()) {
-                        pkList.add(resultSetPK.getString(".COLUMN_NAME"));
-                    }
-                    while (resultSetFK.next()) {
-                        Pkfk pkfk = new Pkfk(tableName,resultSetFK.getString("PKTABLE_NAME"),resultSetFK.getString(".FKTABLE_NAME") ,false,false,false,resultSetFK.getString("PKCOLUMN_NAME"));
-                        fkList.add(pkfk);
-                    }
-                    if (fkList.size()>0) {
-                        for(Pkfk pkfk : fkList){
-                            TableData tableData =null;
-                            if(!pkfk.getDone()){
-                                if(!pkfk.getDoneL() && !pkfk.getDoneR()){
-                                    tableData = new TableData( pkfk.getPkCol(),pkfk.getFkTable(), false,false, false, true, pkfk.getFkTable(), true,false,false);
-                                    pkfk.setDoneL(true);
-                                } else if(!pkfk.getDoneL()){
-                                    tableData = new TableData( pkfk.getPkCol(),pkfk.getFkTable(), false,false, false, true, pkfk.getFkTable(), true,false,false);
-                                    pkfk.setDoneL(true);
-                                }else if(!pkfk.getDoneR()){
-                                    tableData = new TableData( pkfk.getPkCol(), pkfk.getFkTable(), false,false, false, true, pkfk.getFkTable(), false,true,false);
-                                    pkfk.setDoneR(true);
-                                } else if(pkfk.getDoneL() && pkfk.getDoneR()){
-                                    tableData = new TableData( pkfk.getPkCol(),pkfk.getFkTable(), false,false, false, true, pkfk.getFkTable(), true,true,true);
-                                    pkfk.setDone(true);
+                ResultSet resultSet = connection.getMetaData().getTables(null, null, null, new String[]{"TABLE"});
+                while (resultSet.next()) {
+                    String tableName = resultSet.getString("TABLE_NAME");
+                    if(listModelRight.contains(tableName)){
+                        ResultSet resultSetPK = connection.getMetaData().getPrimaryKeys(null, null, tableName);
+                        ResultSet resultSetFK = connection.getMetaData().getExportedKeys(null, null, tableName);
+                        List pkList = new ArrayList();
+
+                        while (resultSetPK.next()) {
+                            pkList.add(resultSetPK.getString(".COLUMN_NAME"));
+                        }
+                        while (resultSetFK.next()) {
+                            Pkfk pkfk = new Pkfk(tableName,resultSetFK.getString("PKTABLE_NAME"),resultSetFK.getString(".FKTABLE_NAME") ,false,false,false,resultSetFK.getString("PKCOLUMN_NAME"));
+                            fkList.add(pkfk);
+                        }
+                        if (fkList.size()>0) {
+                            for(Pkfk pkfk : fkList){
+                                TableData tableData =null;
+                                if(!pkfk.getDone()){
+                                    if(!pkfk.getDoneL() && !pkfk.getDoneR()){
+                                        tableData = new TableData( pkfk.getPkCol(),pkfk.getFkTable(), false,false, false, true, pkfk.getFkTable(), true,false,false);
+                                        pkfk.setDoneL(true);
+                                    } else if(!pkfk.getDoneL()){
+                                        tableData = new TableData( pkfk.getPkCol(),pkfk.getFkTable(), false,false, false, true, pkfk.getFkTable(), true,false,false);
+                                        pkfk.setDoneL(true);
+                                    }else if(!pkfk.getDoneR()){
+                                        tableData = new TableData( pkfk.getPkCol(), pkfk.getFkTable(), false,false, false, true, pkfk.getFkTable(), false,true,false);
+                                        pkfk.setDoneR(true);
+                                    } else if(pkfk.getDoneL() && pkfk.getDoneR()){
+                                        tableData = new TableData( pkfk.getPkCol(),pkfk.getFkTable(), false,false, false, true, pkfk.getFkTable(), true,true,true);
+                                        pkfk.setDone(true);
+                                    }
                                 }
+                                map.put(pkfk.getFkTable(), tableData);
                             }
-                            map.put(pkfk.getFkTable(), tableData);
                         }
-                    }
-                    ResultSet columns = connection.getMetaData().getColumns(null, null, resultSet.getString("TABLE_NAME"), null);
-                    while (columns.next()) {
-                        String columnName = columns.getString("COLUMN_NAME");
-                        String datatype = columns.getString("TYPE_NAME");
-                        String isNullable = columns.getString("IS_NULLABLE");
-                        String is_autoIncrment = columns.getString("IS_AUTOINCREMENT");
+                        ResultSet columns = connection.getMetaData().getColumns(null, null, resultSet.getString("TABLE_NAME"), null);
+                        while (columns.next()) {
+                            String columnName = columns.getString("COLUMN_NAME");
+                            String datatype = columns.getString("TYPE_NAME");
+                            String isNullable = columns.getString("IS_NULLABLE");
+                            String is_autoIncrment = columns.getString("IS_AUTOINCREMENT");
 
-                        //Printing results
-                        TableData tableData = null;
-                        if (pkList.contains(columnName)) {
-                            tableData = new TableData(columnName, datatype, Boolean.getBoolean(isNullable), Boolean.getBoolean(is_autoIncrment), true, false, null,false,false,false);
-                            map.put(columnName, tableData);
-                        } else {
-                            tableData = new TableData(columnName, datatype, Boolean.getBoolean(isNullable), Boolean.getBoolean(is_autoIncrment), false, false, null, false,false,false);
-                            map.put(columnName, tableData);
+                            //Printing results
+                            TableData tableData = null;
+                            if (pkList.contains(columnName)) {
+                                tableData = new TableData(columnName, datatype, Boolean.getBoolean(isNullable), Boolean.getBoolean(is_autoIncrment), true, false, null,false,false,false);
+                                map.put(columnName, tableData);
+                            } else {
+                                tableData = new TableData(columnName, datatype, Boolean.getBoolean(isNullable), Boolean.getBoolean(is_autoIncrment), false, false, null, false,false,false);
+                                map.put(columnName, tableData);
+                            }
                         }
-                    }
+                        log.append("-------------- > Model Code Generating ---> for Class -->" + tableName);
+                        jTextArea1.setText(log.toString());
+                        StringBuffer stringBufferDto = dtoGenerator.buildClass(tableName, map,  txtPkgName.getText()+".model");
+                        if (stringBufferDto != null) {
+                            dtoGenerator.writeClass(tableName, stringBufferDto.toString(), txtFilePath.getText(), txtPkgName.getText()+".model");
+                        }
+                        log.append("\n");
+                        log.append("-------------- > Model Code Generating done for Class -->" + tableName);
+                        log.append("\n");
+                        jTextArea1.setText(log.toString());
+                        log.append("-------------- > DAO Code Generating for Class -->" + tableName);
+                        log.append("\n");
+                        jTextArea1.setText(log.toString());
+                        StringBuffer stringBufferDao = daoGenerator.buildClass(tableName, null, txtPkgName.getText()+".dao");
+                        if (stringBufferDto != null) {
+                            daoGenerator.writeClass(tableName, stringBufferDao.toString(), txtFilePath.getText(), txtPkgName.getText()+".dao");
+                        }
+                        log.append("\n");
+                        log.append("-------------- > DAO Code Generating done for Class -->" + tableName);
+                        log.append("\n");
+                        jTextArea1.setText(log.toString());
+                        StringBuffer stringBufferCotroller = ctlGenerator.buildClass(tableName, null,  txtPkgName.getText()+".controller");
+                        if (stringBufferDto != null) {
+                            ctlGenerator.writeClass(tableName, stringBufferCotroller.toString(), txtFilePath.getText(), txtPkgName.getText()+".controller");
+                        }
+                        log.append("\n");
+                        log.append("-------------- > Controller Code Generating  done for Class -->" + tableName);
+                        jTextArea1.setText(log.toString());
 
-                    StringBuffer stringBufferDto = dtoGenerator.buildClass(tableName, map, "com.test.data");
-                    if (stringBufferDto != null) {
-                        dtoGenerator.writeClass(tableName, stringBufferDto.toString(), "D:\\MSC\\ORM_TEST_2", "com.test.model");
-                    }
-                    StringBuffer stringBufferDao = daoGenerator.buildClass(tableName, null, "com.test.data");
-                    if (stringBufferDto != null) {
-                        daoGenerator.writeClass(tableName, stringBufferDao.toString(), "D:\\MSC\\ORM_TEST_2", "com.test.repository");
-                    }
-                    StringBuffer stringBufferCotroller = ctlGenerator.buildClass(tableName, null, "com.test.data");
-                    if (stringBufferDto != null) {
-                        ctlGenerator.writeClass(tableName, stringBufferCotroller.toString(), "D:\\MSC\\ORM_TEST_2", "com.test.controller");
                     }
                 }
-
+            } else {
+                JOptionPane.showMessageDialog(this, "Please Select Export Location");
             }
+
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,e.getMessage());
         }

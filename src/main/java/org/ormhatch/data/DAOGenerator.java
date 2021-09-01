@@ -29,7 +29,7 @@ public class DAOGenerator extends ClassGenerator {
     }
 
     @Override
-    public void writeClass(String className, String classStr, String fileLocation, String packageName) throws Exception {
+    public Boolean writeClass(String className, String classStr, String fileLocation, String packageName) throws IOException {
         String filePath = null;
         if (!packageName.isEmpty() && !fileLocation.isEmpty()) {
             filePath = packageName.replace(".", "/");
@@ -47,14 +47,16 @@ public class DAOGenerator extends ClassGenerator {
                 writer = new BufferedWriter(new FileWriter(file));
                 writer.write(classStr);
                 writer.flush();
+
             } catch (IOException e) {
                 writer.close();
                 throw e;
             } finally {
                 if (writer != null) writer.close();
             }
+            return true;
         } else {
-            throw new Exception("PackageName or fileLocation invalid");
+            throw new IOException("PackageName or fileLocation invalid");
         }
     }
 

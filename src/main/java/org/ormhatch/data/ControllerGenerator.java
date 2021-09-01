@@ -115,7 +115,8 @@ public class ControllerGenerator extends ClassGenerator {
     }
 
     @Override
-    public void writeClass(String className, String classStr, String fileLocation, String packageName) throws Exception {
+    public Boolean writeClass(String className, String classStr, String fileLocation, String packageName) throws IOException{
+
         String filePath = null;
         if (!packageName.isEmpty() && !fileLocation.isEmpty()) {
             filePath = packageName.replace(".", "/");
@@ -139,8 +140,9 @@ public class ControllerGenerator extends ClassGenerator {
             } finally {
                 if (writer != null) writer.close();
             }
+            return true;
         } else {
-            throw new Exception("PackageName or fileLocation invalid");
+            throw new IOException("PackageName or fileLocation invalid");
         }
     }
 
