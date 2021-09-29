@@ -1,4 +1,4 @@
-# ORM_Mapper Plugin
+# ORM_Mapper
 Required JDK Version  - JDK 8.X +
 
 JPA Mapping Standerds - JPA	2.2
